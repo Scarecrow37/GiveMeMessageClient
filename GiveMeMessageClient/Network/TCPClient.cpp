@@ -2,6 +2,7 @@
 #include "TcpSocket.h"
 
 #include <WinSock2.h>
+#include <WS2tcpip.h>
 
 #pragma comment(lib, "ws2_32")
 
@@ -30,10 +31,14 @@ TcpSocket* TCPClient::Connect(const char* Address, const u_short Port) const
 
     SOCKADDR_IN ServerSocketAddress = {};
     ServerSocketAddress.sin_family = AF_INET;
-    ServerSocketAddress.sin_addr.s_addr = inet_addr(Address);
+    int Result = inet_pton(AF_INET, Address, &ServerSocketAddress.sin_addr);
+    if (Result != 1)
+    {
+        throw TcpSocket::MakeException("Address is invalid.");
+    }
     ServerSocketAddress.sin_port = htons(Port);
 
-    const int Result = connect(Server, reinterpret_cast<SOCKADDR*>(&ServerSocketAddress), sizeof(ServerSocketAddress));
+    Result = connect(Server, reinterpret_cast<SOCKADDR*>(&ServerSocketAddress), sizeof(ServerSocketAddress));
     if (Result < 0)
     {
         throw TcpSocket::MakeException("Connection fail.");
